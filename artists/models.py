@@ -47,6 +47,7 @@ class Artist(models.Model):
     name = models.TextField("Имя")
     #show_name = models.TextField("Название номера")
     show = models.ForeignKey("Show", on_delete=models.CASCADE, null=True)
+    picture = models.ImageField("Изображение", null=True, upload_to="artists")
 
     class Meta:
         verbose_name = "Артист"

@@ -12,6 +12,11 @@
   const artists = ref([]);
   const artistToAdd = ref({});
   const artistToEdit = ref({});
+  const artistsPictureRef = ref();
+  const artistAddImageUrl = ref();
+  const artistEditImageUrl = ref();
+  const artistImageShow = ref({});
+  const artistsPictureRef1 = ref();
 
   const loading = ref(false);
 
@@ -31,8 +36,17 @@
   }
 
   async function onArtistAdd() {
-    await axios.post("/api/artists/", {
-      ...artistToAdd.value,
+    const formData = new FormData();
+    formData.append('picture',artistsPictureRef.value.files[0])
+
+    formData.set('name',artistToAdd.value.name)
+    formData.set('show',artistToAdd.value.show)
+
+    await axios.post("/api/artists/", formData,{
+      headers:{
+        'Content-Type': 'multipart/form-data'
+      }
+      //...artistToAdd.value,
     });
     await fetchArtists();
   }
@@ -44,10 +58,28 @@
     artistToEdit.value = { ...artist };
   }
   async function onUpdateArtist() {
-    await axios.put(`/api/artists/${artistToEdit.value.id}/`, {
-      ...artistToEdit.value,
+    const formData = new FormData();
+    formData.append('picture',artistsPictureRef1.value.files[0])
+
+    formData.set('name',artistToEdit.value.name)
+    formData.set('show',artistToEdit.value.show)
+    await axios.put(`/api/artists/${artistToEdit.value.id}/`, formData,{
+      headers:{
+        'Content-Type': 'multipart/form-data'
+      }
+      //...artistToEdit.value,
     });
     await fetchArtists();
+  }
+
+  async function artistsAddPictureChange(){
+    artistAddImageUrl.value = URL.createObjectURL(artistsPictureRef.value.files[0])
+  }
+  async function onArtistPictureClick(artist) {
+    artistImageShow.value = { ...artist };
+  }
+  async function artistsEditPictureChange(){
+    artistEditImageUrl.value = URL.createObjectURL(artistsPictureRef1.value.files[0])
   }
 
   onBeforeMount(async () => {
@@ -73,6 +105,16 @@
             </div>
           </div>
           <div class="col-auto">
+            <input class="form-control" type="file" ref="artistsPictureRef" @change="artistsAddPictureChange"></input>
+          </div>
+          <div class="col-auto">
+            <img 
+              :src="artistAddImageUrl" 
+              style="max-height: 60px;" 
+              alt=""
+              >
+          </div>
+          <div class="col-auto">
             <div class="form-floating">
               <select class="form-select" v-model="artistToAdd.show" required>
                 <option :value="s.id" v-for="s in shows">{{ s.name }}</option>
@@ -92,6 +134,14 @@
         <div v-for="item in artists" class="artist-item">
           <div>{{ item.name }}</div>
           <div>"{{ showsById[item.show.id]?.name }}"</div>
+          <div v-show="item.picture"><img 
+            :src="item.picture" 
+            @click="onArtistPictureClick(item)"
+            style="max-height: 60px;"
+            data-bs-toggle="modal"
+            data-bs-target="#imageArtistModal"
+            >
+          </div>
 
           <button
             class="btn btn-success"
@@ -137,6 +187,18 @@
               </div>
               <div class="col-auto">
                 <div class="form-floating">
+                  <input class="form-control" type="file" ref="artistsPictureRef1" @change="artistsEditPictureChange" ></input>
+                </div>
+              </div>
+              <div class="col-auto">
+                <img 
+                  :src="artistEditImageUrl" 
+                  style="max-height: 60px;" 
+                  alt=""
+                >
+              </div>
+              <div class="col-auto">
+                <div class="form-floating">
                   <select class="form-select" v-model="artistToEdit.show">
                     <option :value="s.id" v-for="s in shows">
                       {{ s.name }}
@@ -167,6 +229,36 @@
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="imageArtistModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">
+              Просмотр
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+                <div v-show="artistImageShow.picture"><img :src="artistImageShow.picture" style="height: 550px; width: 1100px;"></div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -177,7 +269,7 @@
     border: 1px solid black;
     border-radius: 8px;
     display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
+    grid-template-columns: 1fr 1fr auto auto auto;
     gap: 8px;
     align-content: center;
     align-items: center;
