@@ -37,7 +37,9 @@
 
   async function onArtistAdd() {
     const formData = new FormData();
-    formData.append('picture',artistsPictureRef.value.files[0])
+    if(artistsPictureRef.value.files[0]){
+      formData.append('picture',artistsPictureRef.value.files[0])
+    }  
 
     formData.set('name',artistToAdd.value.name)
     formData.set('show',artistToAdd.value.show)
@@ -55,12 +57,16 @@
     await fetchArtists();
   }
   async function onArtistEditClick(artist) {
-    artistToEdit.value = { ...artist };
+    artistToEdit.value = { ...artist, show: artist.show.id };
+    artistEditImageUrl.value = artist.picture;
   }
   async function onUpdateArtist() {
     const formData = new FormData();
-    formData.append('picture',artistsPictureRef1.value.files[0])
-
+    if(artistsPictureRef1.value.files[0]){
+      formData.append('picture',artistsPictureRef1.value.files[0])
+    }
+    //console.log(artistToEdit.value);
+    
     formData.set('name',artistToEdit.value.name)
     formData.set('show',artistToEdit.value.show)
     await axios.put(`/api/artists/${artistToEdit.value.id}/`, formData,{
@@ -160,7 +166,7 @@
     </div>
 
     <div class="modal fade" id="editArtistModal" tabindex="-1">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">
@@ -187,7 +193,7 @@
               </div>
               <div class="col-auto">
                 <div class="form-floating">
-                  <input class="form-control" type="file" ref="artistsPictureRef1" @change="artistsEditPictureChange" ></input>
+                  <input class="form-control" type="file" ref="artistsPictureRef1" @change="artistsEditPictureChange"></input>
                 </div>
               </div>
               <div class="col-auto">
@@ -231,7 +237,7 @@
     </div>
 
     <div class="modal fade" id="imageArtistModal" tabindex="-1">
-      <div class="modal-dialog modal-xl">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">
@@ -245,7 +251,7 @@
             ></button>
           </div>
           <div class="modal-body">
-                <div v-show="artistImageShow.picture"><img :src="artistImageShow.picture" style="height: 550px; width: 1100px;"></div>
+                <div v-show="artistImageShow.picture"><img :src="artistImageShow.picture" style="max-width: 100%;max-height: 100%;"></div>
           </div>
           <div class="modal-footer">
             <button
@@ -269,7 +275,7 @@
     border: 1px solid black;
     border-radius: 8px;
     display: grid;
-    grid-template-columns: 1fr 1fr auto auto auto;
+    grid-template-columns: 1fr 1fr 1fr auto auto;
     gap: 8px;
     align-content: center;
     align-items: center;

@@ -12,6 +12,11 @@
   const shows = ref([]);
   const showToAdd = ref({});
   const showToEdit = ref({});
+  const showsPictureRef = ref();
+  const showAddImageUrl = ref();
+  const showEditImageUrl = ref();
+  const showImageShow = ref({});
+  const showsPictureRef1 = ref();
 
   const loading = ref(false);
 
@@ -31,9 +36,23 @@
   }
 
   async function onShowAdd() {
-    await axios.post("/api/show/", {
-      ...showToAdd.value,
+    const formData = new FormData();
+    if(showsPictureRef.value.files[0]){
+      formData.append('picture',showsPictureRef.value.files[0])
+    }  
+
+    formData.set('name',showToAdd.value.name)
+    formData.set('type',showToAdd.value.type)
+    formData.set('price',showToAdd.value.price)
+
+    await axios.post("/api/show/", formData,{
+      headers:{
+        'Content-Type': 'multipart/form-data'
+      }
     });
+    //await axios.post("/api/show/", {
+    //  ...showToAdd.value,
+    //});
     await fetchShows();
   }
   async function onRemoveClick(show) {
@@ -41,13 +60,39 @@
     await fetchShows();
   }
   async function onShowEditClick(show) {
-    showToEdit.value = { ...show };
+    showToEdit.value = { ...show, type: show.type.id };
+    showEditImageUrl.value = show.picture;
   }
   async function onUpdateShow() {
-    await axios.put(`/api/show/${showToEdit.value.id}/`, {
-      ...showToEdit.value,
+    const formData = new FormData();
+    if(showsPictureRef1.value.files[0]){
+      formData.append('picture',showsPictureRef1.value.files[0])
+    }
+
+    formData.set('name',showToEdit.value.name)
+    formData.set('type',showToEdit.value.type)
+    formData.set('price',showToEdit.value.price)
+
+    await axios.put(`/api/show/${showToEdit.value.id}/`, formData,{
+      headers:{
+        'Content-Type': 'multipart/form-data'
+      }
+      //...artistToEdit.value,
     });
+    //await axios.put(`/api/show/${showToEdit.value.id}/`, {
+    //  ...showToEdit.value,
+    //});
     await fetchShows();
+  }
+
+  async function showsAddPictureChange(){
+    showAddImageUrl.value = URL.createObjectURL(showsPictureRef.value.files[0])
+  }
+  async function onShowPictureClick(show) {
+    showImageShow.value = { ...show };
+  }
+  async function showsEditPictureChange(){
+    showEditImageUrl.value = URL.createObjectURL(showsPictureRef1.value.files[0])
   }
 
   onBeforeMount(async () => {
@@ -71,6 +116,16 @@
               />
               <label for="floatingInput">Название</label>
             </div>
+          </div>
+          <div class="col-auto">
+            <input class="form-control" type="file" ref="showsPictureRef" @change="showsAddPictureChange"></input>
+          </div>
+          <div class="col-auto">
+            <img 
+              :src="showAddImageUrl" 
+              style="max-height: 60px;" 
+              alt=""
+              >
           </div>
           <div class="col-auto">
             <div class="form-floating">
@@ -104,6 +159,14 @@
           <div>{{ item.name }}</div>
           <div>{{ typesById[item.type.id]?.show_type }}</div>
           <div>{{ item.price }}</div>
+          <div v-show="item.picture"><img 
+            :src="item.picture" 
+            @click="onShowPictureClick(item)"
+            style="max-height: 60px;"
+            data-bs-toggle="modal"
+            data-bs-target="#imageShowModal"
+            >
+          </div>
 
           <button
             class="btn btn-success"
@@ -149,6 +212,18 @@
               </div>
               <div class="col-auto">
                 <div class="form-floating">
+                  <input class="form-control" type="file" ref="showsPictureRef1" @change="showsEditPictureChange"></input>
+                </div>
+              </div>
+              <div class="col-auto">
+                <img 
+                  :src="showEditImageUrl" 
+                  style="max-height: 60px;" 
+                  alt=""
+                >
+              </div>
+              <div class="col-auto">
+                <div class="form-floating">
                   <select class="form-select" v-model="showToEdit.type">
                     <option :value="t.id" v-for="t in types">
                       {{ t.show_type }}
@@ -189,6 +264,36 @@
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="imageShowModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">
+              Просмотр
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+                <div v-show="showImageShow.picture"><img :src="showImageShow.picture" style="max-width: 100%;max-height: 100%;"></div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -199,7 +304,7 @@
     border: 1px solid black;
     border-radius: 8px;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto auto;
     gap: 8px;
     align-content: center;
     align-items: center;

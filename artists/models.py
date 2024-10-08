@@ -35,6 +35,7 @@ class Show(models.Model):
     name = models.TextField("Название")
     type = models.ForeignKey("Type", on_delete=models.CASCADE, null=True)
     price = models.IntegerField("Стоимость")
+    picture = models.ImageField("Изображение", null=True, upload_to="artists")
     
     class Meta:
         verbose_name = "Номер"

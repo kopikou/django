@@ -49,7 +49,7 @@
     await fetchExpenses();
   }
   async function onExpenseEditClick(expense) {
-    expenseToEdit.value = { ...expense };
+    expenseToEdit.value = { ...expense, artist: expense.artist.id, income: expense.income.id };
   }
   async function onUpdateExpense() {
     await axios.put(`/api/expense/${expenseToEdit.value.id}/`, {

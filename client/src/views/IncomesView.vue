@@ -41,7 +41,7 @@
     await fetchIncome();
   }
   async function onIncomeEditClick(income) {
-    incomeToEdit.value = { ...income };
+    incomeToEdit.value = { ...income, show: income.show.id };
   }
   async function onUpdateIncome() {
     await axios.put(`/api/income/${incomeToEdit.value.id}/`, {

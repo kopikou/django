@@ -14,7 +14,7 @@ class ArtistsViewset(mixins.CreateModelMixin,
     serializer_class = ArtistSerializer
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update'):
             return ArtistCreateSerializer
         return super().get_serializer_class()
 
@@ -28,7 +28,7 @@ class ShowViewset(mixins.CreateModelMixin,
     serializer_class = ShowSerializer
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update'):
             return ShowCreateSerializer
         return super().get_serializer_class()
 
@@ -51,7 +51,7 @@ class IncomeViewset(mixins.CreateModelMixin,
     serializer_class = IncomeSerializer
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update'):
             return IncomeCreateSerializer
         return super().get_serializer_class()
 
@@ -65,6 +65,6 @@ class ExpenseViewset(mixins.CreateModelMixin,
     serializer_class = ExpensesSerializer    
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update'):
             return ExpensesCreateSerializer
         return super().get_serializer_class()
