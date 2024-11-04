@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 
 from artists import views
 from rest_framework.routers import DefaultRouter
-from artists.api import ArtistsViewset,ShowViewset,TypeViewset,IncomeViewset,ExpenseViewset
+from artists.api import ArtistsViewset,ShowViewset,TypeViewset,IncomeViewset,ExpenseViewset,UsersViewset,UserProfileViewSet
 
 router = DefaultRouter()
 router.register("artists", ArtistsViewset, basename="artists")
@@ -29,6 +29,8 @@ router.register("show", ShowViewset, basename="show")
 router.register("type", TypeViewset, basename="type")
 router.register("income", IncomeViewset, basename="income")
 router.register("expense", ExpenseViewset, basename="expense")
+router.register("users", UsersViewset, basename="users")
+router.register("user-profile", UserProfileViewSet, basename="user-profile")
 
 urlpatterns = [
     path('', views.ShowArtistsView.as_view()),

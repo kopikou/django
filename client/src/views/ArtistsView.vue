@@ -16,17 +16,33 @@
   const artistAddImageUrl = ref();
   const artistEditImageUrl = ref();
   const artistImageShow = ref({});
-  const artistsPictureRef1 = ref();
+  const artistsEditPictureRef = ref();
+  const showIdFilter = ref(0);
+  const users = ref([]);
+  const userIdFilter = ref(0);
+  const superuserId = ref(0);
 
   const loading = ref(false);
+  const superuser = ref(false);
 
   const showsById = computed(() => {
     return _.keyBy(shows.value, (x) => x.id);
   });
 
   async function fetchArtists() {
+    const params = {};
+    if (showIdFilter.value !== "Все" && showIdFilter.value !== 0) {
+      params.show = showIdFilter.value;
+    }
+    if (userIdFilter.value !== 0 && userIdFilter.value != superuserId.value){
+      params.user = userIdFilter.value;
+    }
+    
+    const r = await axios.get("/api/artists/",{
+        params: params
+      });
     loading.value = true;
-    const r = await axios.get("/api/artists/");
+   
     artists.value = r.data;
     loading.value = false;
   }
@@ -34,6 +50,22 @@
     const r = await axios.get("/api/show/");
     shows.value = r.data;
   }
+
+  async function fetchUsers() {
+    const r = await axios.get("/api/users/");
+    users.value = r.data;
+
+  }
+  async function fetchUserProfile() {
+  const r = await axios.get("/api/user-profile/info/");
+
+  //isAuthorized.value = r.data.is_authenticated
+  superuser.value = r.data.is_superuser
+  
+  if (superuser.value==true)
+    superuserId.value = r.data.id
+    fetchUsers()
+}
 
   async function onArtistAdd() {
     const formData = new FormData();
@@ -62,8 +94,8 @@
   }
   async function onUpdateArtist() {
     const formData = new FormData();
-    if(artistsPictureRef1.value.files[0]){
-      formData.append('picture',artistsPictureRef1.value.files[0])
+    if(artistsEditPictureRef.value.files[0]){
+      formData.append('picture',artistsEditPictureRef.value.files[0])
     }
     //console.log(artistToEdit.value);
     
@@ -85,12 +117,17 @@
     artistImageShow.value = { ...artist };
   }
   async function artistsEditPictureChange(){
-    artistEditImageUrl.value = URL.createObjectURL(artistsPictureRef1.value.files[0])
+    artistEditImageUrl.value = URL.createObjectURL(artistsEditPictureRef.value.files[0])
+  }
+
+  async function onSelectClick(){
+    await fetchArtists();
   }
 
   onBeforeMount(async () => {
     await fetchArtists();
     await fetchShows();
+    await fetchUserProfile();
   });
 </script>
 
@@ -135,6 +172,21 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
+      <div class="form-floating">
+        <select class="form-select" v-model="showIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="s.id" v-for="s in shows">{{ s.name }}</option>
+        </select>
+        <label for="floatingInput">Шоу</label>
+      </div>
+      
+      <div class="form-floating" v-if="superuser">
+        <select class="form-select" v-model="userIdFilter" @change="onSelectClick" required>
+          <option :value="u.id" v-for="u in users" >{{ u.username }}</option>
+        </select>
+        <label for="floatingInput">Пользователь</label>
+      </div>
+      {{ userIdFilter }}
 
       <div>
         <div v-for="item in artists" class="artist-item">
@@ -193,7 +245,7 @@
               </div>
               <div class="col-auto">
                 <div class="form-floating">
-                  <input class="form-control" type="file" ref="artistsPictureRef1" @change="artistsEditPictureChange"></input>
+                  <input class="form-control" type="file" ref="artistsEditPictureRef" @change="artistsEditPictureChange"></input>
                 </div>
               </div>
               <div class="col-auto">
