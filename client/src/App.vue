@@ -1,4 +1,12 @@
 <script setup>
+  import { storeToRefs } from "pinia";
+  import useUserProfileStore from "@/stores/userProfileStore";
+  const userProfileStore = useUserProfileStore();
+    const {
+      is_auth,
+      userId,
+      is_superuser
+    } = storeToRefs(userProfileStore)
 </script>
 
 <template>

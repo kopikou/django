@@ -3,16 +3,27 @@
   import { computed, ref, onBeforeMount } from "vue";
   import _ from "lodash";
   import Cookies from "js-cookie";
+  import { storeToRefs } from "pinia";
+  import useUserProfileStore from "@/stores/userProfileStore";
 
   onBeforeMount(() => {
     axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
   });
+  const userProfileStore = useUserProfileStore();
+  const {
+    is_auth,
+    userId,
+    is_superuser
+  } = storeToRefs(userProfileStore)
 
   const artists = ref([]);
   const incomes = ref([]);
   const expenses = ref([]);
   const expenseToAdd = ref({});
   const expenseToEdit = ref({});
+  const users = ref([]);
+  const userIdFilter = ref(0);
+  const expenseStats = ref({});
 
   const loading = ref(false);
 
@@ -24,8 +35,16 @@
   });
 
   async function fetchExpenses() {
+    const params = {};
+    if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
+      params.user = userIdFilter.value;
+    }
+    
+    const r = await axios.get("/api/expense/",{
+        params: params
+      });
     loading.value = true;
-    const r = await axios.get("/api/expense/");
+    //const r = await axios.get("/api/expense/");
     expenses.value = r.data;
     loading.value = false;
   }
@@ -36,6 +55,15 @@
   async function fetchIncomes() {
     const r = await axios.get("/api/income/");
     incomes.value = r.data;
+  }
+
+  async function fetchUsers() {
+    const r = await axios.get("/api/users/");
+    users.value = r.data;
+  }
+  async function fetchUserProfile() {  
+  if (is_superuser)
+    fetchUsers()
   }
 
   async function onExpenseAdd() {
@@ -58,17 +86,36 @@
     await fetchExpenses();
   }
 
+  async function onSelectClick(){
+    await fetchExpenses();
+  }
+  async function fetchExpenseStats() {
+    const r = await axios.get("/api/expense/stats");
+    expenseStats.value = r.data;
+  }
+
   onBeforeMount(async () => {
     await fetchExpenses();
     await fetchArtists();
     await fetchIncomes();
+    await fetchUserProfile();
+    await fetchExpenseStats()
   });
 </script>
 
 <template>
-  <div class="container-fluid">
+  <div class="container">
     <div class="p-2">
-      <form @submit.prevent.stop="onExpenseAdd">
+      <div class="container-stat">
+        <b>Статистика выплат по зарплате:</b>
+        <ul>
+          <li>Общее количество выплат: {{ expenseStats.count }}</li>
+          <li>Средняя зарплата: {{ expenseStats.avg }}</li>
+          <li>Максимальная зарплата: {{ expenseStats.max }}</li>
+          <li>Минимальная зарплата: {{ expenseStats.min }}</li>
+        </ul>
+      </div>
+      <form @submit.prevent.stop="onExpenseAdd"  class="mb-2">
         <div class="row">
           <div class="col">
             <div class="form-floating">
@@ -98,12 +145,19 @@
             </div>
           </div>
           <div class="col-auto">
-            <button class="btn btn-primary">Добавить</button>
+            <button class="btn btn-outline-secondary">Добавить</button>
           </div>
         </div>
       </form>
 
       <div v-if="loading">Загрузка...</div>
+      <div class="form-floating" v-if="is_superuser">
+        <select class="form-select" v-model="userIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="u.id" v-for="u in users" >{{ u.username }}</option>
+        </select>
+        <label for="floatingInput">Пользователь</label>
+      </div>
 
       <div>
         <div v-for="item in expenses" class="expense-item">
@@ -202,12 +256,25 @@
   .expense-item {
     padding: 0.5rem;
     margin: 0.5rem 0;
-    border: 1px solid black;
+
     border-radius: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr auto auto;
     gap: 8px;
     align-content: center;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.178);
+    background-color:rgba(250, 161, 235, 0.358);
+  }
+  .container-stat{
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+
+    border-radius: 8px;
+    display: grid;
+    align-content: center;
+    align-items: center;
+    background-color:rgba(250, 161, 235, 0.358);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.178);
   }
 </style>

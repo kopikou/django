@@ -3,10 +3,18 @@
   import { computed, ref, onBeforeMount } from "vue";
   import _ from "lodash";
   import Cookies from "js-cookie";
+  import { storeToRefs } from "pinia";
+  import useUserProfileStore from "@/stores/userProfileStore";
 
   onBeforeMount(() => {
     axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
   });
+  const userProfileStore = useUserProfileStore();
+  const {
+    is_auth,
+    userId,
+    is_superuser
+  } = storeToRefs(userProfileStore)
 
   const types = ref([]);  
   const shows = ref([]);
@@ -17,6 +25,7 @@
   const showEditImageUrl = ref();
   const showImageShow = ref({});
   const showsPictureRef1 = ref();
+  const showStats = ref({});
 
   const loading = ref(false);
 
@@ -95,16 +104,32 @@
     showEditImageUrl.value = URL.createObjectURL(showsPictureRef1.value.files[0])
   }
 
+  async function fetchShowStats() {
+    const r = await axios.get("/api/show/stats");
+    showStats.value = r.data;
+  }
+
   onBeforeMount(async () => {
     await fetchShows();
     await fetchTypes();
+    await fetchShowStats();
   });
 </script>
 
 <template>
-  <div class="container-fluid">
+  <div class="container">
     <div class="p-2">
-      <form @submit.prevent.stop="onShowAdd">
+      <div class="container-stat">
+        <b>Статистика шоу-программ:</b>
+        <ul>
+          <li>Общее количество шоу-программ: {{ showStats.count }}</li>
+          <li>Средняя стоимость шоу-программы: {{ showStats.avg }}</li>
+          <li>Максимальная стоимость шоу-программы: {{ showStats.max }}</li>
+          <li>Минимальная стоимость шоу-программы: {{ showStats.min }}</li>
+        </ul>
+      </div>
+
+      <form @submit.prevent.stop="onShowAdd" v-if="is_superuser">
         <div class="row">
           <div class="col">
             <div class="form-floating">
@@ -147,7 +172,7 @@
             </div>
           </div>
           <div class="col-auto">
-            <button class="btn btn-primary">Добавить</button>
+            <button class="btn btn-outline-secondary">Добавить</button>
           </div>
         </div>
       </form>
@@ -173,11 +198,11 @@
             @click="onShowEditClick(item)"
             data-bs-toggle="modal"
             data-bs-target="#editShowModal"
-          >
+            v-if="is_superuser">
             <i class="bi bi-pen-fill"></i>
           </button>
 
-          <button class="btn btn-danger" @click="onRemoveClick(item)">
+          <button class="btn btn-danger" @click="onRemoveClick(item)" v-if="is_superuser">
             <i class="bi bi-x"></i>
           </button>
         </div>
@@ -301,12 +326,25 @@
   .show-item {
     padding: 0.5rem;
     margin: 0.5rem 0;
-    border: 1px solid black;
+
     border-radius: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr auto auto;
     gap: 8px;
     align-content: center;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.178);
+    background-color:rgba(250, 161, 235, 0.358);
+  }
+  .container-stat{
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+
+    border-radius: 8px;
+    display: grid;
+    align-content: center;
+    align-items: center;
+    background-color:rgba(250, 161, 235, 0.358);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.178);
   }
 </style>

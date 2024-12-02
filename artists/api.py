@@ -1,11 +1,14 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins, viewsets
 
+from artists import serializers
 from artists.models import Artist,Show,Type,Income,Expenses
-from artists.serializers import ArtistCreateSerializer, ArtistSerializer, ExpensesCreateSerializer, IncomeCreateSerializer, ShowCreateSerializer,ShowSerializer,TypeSerializer,IncomeSerializer,ExpensesSerializer,UserSerializer
+from artists.serializers import *
 from django.contrib.auth.models import User
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Avg, Count, Max, Min 
+
 class UsersViewset(mixins.RetrieveModelMixin, 
     mixins.ListModelMixin, 
     GenericViewSet):
@@ -15,11 +18,16 @@ class UsersViewset(mixins.RetrieveModelMixin,
 class UserProfileViewSet(GenericViewSet):
     @action(detail=False, methods=['get'], url_path='info')
     def get_info(self, request, *args, **kwargs):
-        return Response({
-            "is_superuser": self.request.user.is_superuser,
-            "is_authenticated": self.request.user.is_authenticated,
-            "id": self.request.user.id
-        })
+        user = request.user
+        data = {
+            "is_authenticated": user.is_authenticated,
+        }
+        if user.is_authenticated:
+            data.update({
+                "is_superuser": user.is_superuser,
+                "id": user.id
+            })
+        return Response(data)
 
 class ArtistsViewset(mixins.CreateModelMixin,
     mixins.UpdateModelMixin, 
@@ -38,13 +46,16 @@ class ArtistsViewset(mixins.CreateModelMixin,
         qs = super().get_queryset()
 
         show = self.request.query_params.get('show')
-        user = self.request.query_params.get('user')
+        #user = self.request.query_params.get('user')
         if show:
             qs = qs.filter(show=show)
-        if user:
-            qs = qs.filter(user=user)
-        if not self.request.user.is_superuser:
-            qs = qs.filter(user=self.request.user)
+        # if user:
+        #     qs = qs.filter(user=user)
+        # if not self.request.user.is_superuser:
+        #     qs = qs.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            #qs = qs.filter(user=self.request.user)
+            qs = None
         return qs
 
 class ShowViewset(mixins.CreateModelMixin,
@@ -63,9 +74,26 @@ class ShowViewset(mixins.CreateModelMixin,
     def get_queryset(self):
         qs = super().get_queryset()
 
-        if(not self.request.user.is_superuser):
-            qs = qs.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            #qs = qs.filter(user=self.request.user)
+            qs = None
         return qs
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+        avg = serializers.FloatField()
+        max = serializers.IntegerField()
+        min = serializers.IntegerField()
+
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, ** kwargs):
+        stats = Show.objects.aggregate(
+        count=Count("*"),
+        avg=Avg("price"),
+        max=Max("price"),
+        min=Min("price"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
 
 class TypeViewset(mixins.CreateModelMixin,
     mixins.UpdateModelMixin, 
@@ -78,8 +106,9 @@ class TypeViewset(mixins.CreateModelMixin,
     def get_queryset(self):
         qs = super().get_queryset()
 
-        if(not self.request.user.is_superuser):
-            qs = qs.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            #qs = qs.filter(user=self.request.user)
+            qs = None
         return qs
 
 class IncomeViewset(mixins.CreateModelMixin,
@@ -95,10 +124,17 @@ class IncomeViewset(mixins.CreateModelMixin,
         if self.action in ('create', 'update'):
             return IncomeCreateSerializer
         return super().get_serializer_class()
+    
     def get_queryset(self):
         qs = super().get_queryset()
 
-        if(not self.request.user.is_superuser):
+        show = self.request.query_params.get('show')
+        user = self.request.query_params.get('user')
+        if show:
+            qs = qs.filter(show=show)
+        if user:
+            qs = qs.filter(user=user)
+        if not self.request.user.is_superuser:
             qs = qs.filter(user=self.request.user)
         return qs
 
@@ -118,6 +154,25 @@ class ExpenseViewset(mixins.CreateModelMixin,
     def get_queryset(self):
         qs = super().get_queryset()
 
-        if(not self.request.user.is_superuser):
+        user = self.request.query_params.get('user')
+        if user:
+            qs = qs.filter(user=user)
+        if not self.request.user.is_superuser:
             qs = qs.filter(user=self.request.user)
         return qs
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+        avg = serializers.FloatField()
+        max = serializers.IntegerField()
+        min = serializers.IntegerField()
+
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, ** kwargs):
+        stats = Expenses.objects.aggregate(
+        count=Count("*"),
+        avg=Avg("salary"),
+        max=Max("salary"),
+        min=Min("salary"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
