@@ -4,6 +4,8 @@ import ShowsView from '../views/ShowsView.vue';
 import TypesView from '../views/TypesView.vue';
 import IncomesView from '../views/IncomesView.vue';
 import ExpensesView from '../views/ExpensesView.vue';
+import Login from '../views/Login.vue';
+import Logout from '../views/Logout.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +34,16 @@ const router = createRouter({
       path: "/expenses",
       name: "ExpensesView",
       component: ExpensesView,
+    },
+    {
+      path: "/login",
+      name: "Login",
+      component: Login,
+    },
+    {
+      path: "/logout",
+      name: "Logout",
+      component: Logout,
     },
   ]
 })

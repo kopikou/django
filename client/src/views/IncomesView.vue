@@ -93,9 +93,9 @@
 </script>
 
 <template>
-  <div class="container">
-    <div class="p-2">
-      <form @submit.prevent.stop="onIncomeAdd" class="mb-2">
+  <div class="container" >
+    <div class="p-2" >
+      <form @submit.prevent.stop="onIncomeAdd" class="mb-2" v-if="is_auth">
         <div class="row">
           <div class="col">
             <div class="form-floating">
@@ -134,7 +134,7 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
-      <div class="form-floating  mb-2">
+      <div class="form-floating  mb-2" v-if="is_auth">
         <select class="form-select" v-model="showIdFilter" @change="onSelectClick" required>
           <option>Все</option>
           <option :value="s.id" v-for="s in shows">{{ s.name }}</option>

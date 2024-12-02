@@ -119,7 +119,7 @@
 <template>
   <div class="container">
     <div class="p-2">
-      <div class="container-stat">
+      <div class="container-stat" v-if="is_auth">
         <b>Статистика шоу-программ:</b>
         <ul>
           <li>Общее количество шоу-программ: {{ showStats.count }}</li>

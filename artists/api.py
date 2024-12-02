@@ -8,6 +8,13 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Avg, Count, Max, Min 
+from django.contrib.auth import authenticate, login, logout
+from django.core.cache import cache
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.views import APIView
+from rest_framework import status
+
+
 
 class UsersViewset(mixins.RetrieveModelMixin, 
     mixins.ListModelMixin, 
@@ -16,6 +23,8 @@ class UsersViewset(mixins.RetrieveModelMixin,
     serializer_class = UserSerializer
 
 class UserProfileViewSet(GenericViewSet):
+    permission_classes = [IsAuthenticated]
+
     @action(detail=False, methods=['get'], url_path='info')
     def get_info(self, request, *args, **kwargs):
         user = request.user
@@ -28,6 +37,39 @@ class UserProfileViewSet(GenericViewSet):
                 "id": user.id
             })
         return Response(data)
+    
+    @action(detail=False, methods=['post'], url_path='login', permission_classes=[])
+    def login(self, request, *args, **kwargs):
+        username = self.request.data['username']
+        password = self.request.data['password']
+
+        user = authenticate(username=username, password=password)
+        if user:
+            login(request, user)
+        
+        return Response({
+            'is_auth': bool(user)
+        })
+    
+    @action(detail=False, methods=['get'], url_path='logout', permission_classes=[])
+    def logout(self, request, *args, **kwargs):
+        # username = self.request.data['username']
+        # password = self.request.data['password']
+
+        # user = authenticate(username=username, password=password)
+        # if user:
+        #     login(request, user)
+        
+        # return Response({
+        #     'is_auth': bool(user)
+        # })
+        if self.request.user.is_authenticated:
+            #request.user.auth_token.delete()
+            logout(request)
+        return Response({
+            'is_auth': False
+        })
+    
 
 class ArtistsViewset(mixins.CreateModelMixin,
     mixins.UpdateModelMixin, 
@@ -134,8 +176,10 @@ class IncomeViewset(mixins.CreateModelMixin,
             qs = qs.filter(show=show)
         if user:
             qs = qs.filter(user=user)
-        if not self.request.user.is_superuser:
+        if not self.request.user.is_superuser and self.request.user.is_authenticated:
             qs = qs.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            qs = None
         return qs
 
 class ExpenseViewset(mixins.CreateModelMixin,
@@ -157,8 +201,10 @@ class ExpenseViewset(mixins.CreateModelMixin,
         user = self.request.query_params.get('user')
         if user:
             qs = qs.filter(user=user)
-        if not self.request.user.is_superuser:
+        if not self.request.user.is_superuser and self.request.user.is_authenticated:
             qs = qs.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            qs = None
         return qs
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()

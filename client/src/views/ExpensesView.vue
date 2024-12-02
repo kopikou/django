@@ -104,9 +104,9 @@
 </script>
 
 <template>
-  <div class="container">
-    <div class="p-2">
-      <div class="container-stat">
+  <div class="container" >
+    <div class="p-2" v-if="is_auth">
+      <div class="container-stat" >
         <b>Статистика выплат по зарплате:</b>
         <ul>
           <li>Общее количество выплат: {{ expenseStats.count }}</li>

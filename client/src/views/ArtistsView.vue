@@ -171,7 +171,7 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
-      <div class="form-floating">
+      <div class="form-floating" v-if="is_auth">
         <select class="form-select" v-model="showIdFilter" @change="onSelectClick" required>
           <option>Все</option>
           <option :value="s.id" v-for="s in shows">{{ s.name }}</option>

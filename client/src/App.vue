@@ -1,12 +1,14 @@
 <script setup>
   import { storeToRefs } from "pinia";
   import useUserProfileStore from "@/stores/userProfileStore";
+
   const userProfileStore = useUserProfileStore();
     const {
       is_auth,
       userId,
       is_superuser
     } = storeToRefs(userProfileStore)
+    
 </script>
 
 <template>
@@ -50,6 +52,10 @@
                 Пользователь
               </a>
               <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/logout" v-if="is_auth">Выйти</a>
+                  <a class="dropdown-item" href="/login" v-else>Войти</a>
+                </li>
+              
                 <li><a class="dropdown-item" href="/admin">Админка</a></li>
               </ul>
             </li>
