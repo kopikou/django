@@ -102,16 +102,51 @@
     const r = await axios.get("/api/expense/stats");
     expenseStats.value = r.data;
   }
-  async function onExportClick() {
+  async function onExportToExcelClick() {
+    const params = {};
+    if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
+      params.user = userIdFilter.value;
+    }
+    if (artistIdFilter.value !== 0 && artistIdFilter.value != "Все"){
+      params.artist = artistIdFilter.value;
+    }
+    if (incomeIdFilter.value !== 0 && incomeIdFilter.value != "Все"){
+      params.income = incomeIdFilter.value;
+    }
+
     const response = await axios.get('/api/expense/export-excel/', {
-        responseType: 'blob',
+      params: params,
+      responseType: 'blob',
     });
 
-    // Создаем ссылку для скачивания файла
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'data.xlsx'); // Имя файла для сохранения
+    link.setAttribute('download', 'Расходы.xlsx');
+    document.body.appendChild(link);
+    link.click();
+  }
+  async function onExportToWordClick() {
+    const params = {};
+    if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
+      params.user = userIdFilter.value;
+    }
+    if (artistIdFilter.value !== 0 && artistIdFilter.value != "Все"){
+      params.artist = artistIdFilter.value;
+    }
+    if (incomeIdFilter.value !== 0 && incomeIdFilter.value != "Все"){
+      params.income = incomeIdFilter.value;
+    }
+
+    const response = await axios.get('/api/expense/export-word/', {
+      params: params,
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Расходы.docx');
     document.body.appendChild(link);
     link.click();
   }
@@ -216,7 +251,8 @@
         </div>
       </div>
       <div  v-if="is_auth">
-        <button class="btn btn-outline-secondary"  @click="onExportClick()">Экспорт</button>
+        <button class="btn btn-outline-secondary m-2"  @click="onExportToExcelClick()">Экспорт в Excel</button>
+        <button class="btn btn-outline-secondary"  @click="onExportToWordClick()">Экспорт в Word</button>
       </div>
     </div>
 

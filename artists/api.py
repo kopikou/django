@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 import pandas as pd
 from django.http import HttpResponse;
+from docx import Document; 
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -248,7 +249,6 @@ class ExpenseViewset(mixins.CreateModelMixin,
         show = serializers.CharField(source='income.show')
         date = serializers.DateField(source='income.date')
         salary_pers = serializers.IntegerField(source='salary')
-        #user_email = serializers.EmailField(source='user.email')  
 
         class Meta:
             model = Expenses
@@ -257,12 +257,23 @@ class ExpenseViewset(mixins.CreateModelMixin,
     @action(detail=False, methods=['GET'], url_path='export-excel')
     def export_excel(self, request):
         queryset = self.get_queryset()
+        artist = self.request.query_params.get('artist')
+        user = self.request.query_params.get('user')
+        income = self.request.query_params.get('income')
+        if artist:
+            queryset = queryset.filter(artist=artist)
+        if income:
+            queryset = queryset.filter(income=income)
+        if user:
+            queryset = queryset.filter(user=user)
+        if not self.request.user.is_superuser and self.request.user.is_authenticated:
+            queryset = queryset.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            queryset = None
 
-        # Используем специальный сериализатор для экспорта
         serializer = self.ExportExpensesSerializer(queryset, many=True)
         data = serializer.data
 
-        # Преобразуем данные в DataFrame
         df = pd.DataFrame(data)
 
         response = HttpResponse(
@@ -270,4 +281,34 @@ class ExpenseViewset(mixins.CreateModelMixin,
         )
         response['Content-Disposition'] = 'attachment; filename="Расходы.xlsx"'
         df.to_excel(response, index=False)
+        return response
+    @action(detail=False, methods=['GET'], url_path='export-word')
+    def export_word(self, request):
+        queryset = self.get_queryset()
+        artist = self.request.query_params.get('artist')
+        user = self.request.query_params.get('user')
+        income = self.request.query_params.get('income')
+        if artist:
+            queryset = queryset.filter(artist=artist)
+        if income:
+            queryset = queryset.filter(income=income)
+        if user:
+            queryset = queryset.filter(user=user)
+        if not self.request.user.is_superuser and self.request.user.is_authenticated:
+            queryset = queryset.filter(user=self.request.user)
+        if(not self.request.user.is_authenticated):
+            queryset = None
+
+        serializer = self.ExportExpensesSerializer(queryset, many=True)
+        data = serializer.data
+
+        doc = Document()
+        doc.add_heading('Данные о расходах', level=1)
+
+        for item in data:
+            doc.add_paragraph(str(item))
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = 'attachment; filename="Расходы.docx"'
+        doc.save(response)
         return response
