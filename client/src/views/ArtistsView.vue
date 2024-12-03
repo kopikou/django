@@ -26,6 +26,8 @@
   const artistImageShow = ref({});
   const artistsEditPictureRef = ref();
   const showIdFilter = ref(0);
+  const artistIdFilter = ref(0);
+  const artistsForFilter = ref([]);
   const users = ref([]);
   const userIdFilter = ref(0);
 
@@ -40,8 +42,11 @@
     if (showIdFilter.value !== "Все" && showIdFilter.value !== 0) {
       params.show = showIdFilter.value;
     }
-    if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
-      params.user = userIdFilter.value;
+    // if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
+    //   params.user = userIdFilter.value;
+    // }
+    if (artistIdFilter.value !== "Все" && artistIdFilter.value !== 0) {
+      params.name = artistIdFilter.value;
     }
     
     const r = await axios.get("/api/artists/",{
@@ -51,6 +56,9 @@
    
     artists.value = r.data;
     loading.value = false;
+
+    const res = await axios.get("/api/artists/");
+    artistsForFilter.value = res.data;
   }
   async function fetchShows() {
     const r = await axios.get("/api/show/");
@@ -171,12 +179,20 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
-      <div class="form-floating" v-if="is_auth">
+      <div class="form-floating mb-2" v-if="is_auth">
         <select class="form-select" v-model="showIdFilter" @change="onSelectClick" required>
           <option>Все</option>
           <option :value="s.id" v-for="s in shows">{{ s.name }}</option>
         </select>
         <label for="floatingInput">Шоу</label>
+      </div>
+
+      <div class="form-floating" v-if="is_auth">
+        <select class="form-select" v-model="artistIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="a.name" v-for="a in artistsForFilter">{{ a.name }}</option>
+        </select>
+        <label for="floatingInput">Артисты</label>
       </div>
       
       <!-- <div class="form-floating" v-if="is_superuser">

@@ -26,6 +26,7 @@
   const showImageShow = ref({});
   const showsPictureRef1 = ref();
   const showStats = ref({});
+  const typeIdFilter = ref(0);
 
   const loading = ref(false);
 
@@ -35,7 +36,15 @@
 
   async function fetchShows() {
     loading.value = true;
-    const r = await axios.get("/api/show/");
+    const params = {};
+
+    if (typeIdFilter.value !== "Все" && typeIdFilter.value !== 0) {
+      params.type = typeIdFilter.value;
+    }
+
+    const r = await axios.get("/api/show/",{
+        params: params
+      });
     shows.value = r.data;
     loading.value = false;
   }
@@ -109,6 +118,10 @@
     showStats.value = r.data;
   }
 
+  async function onSelectClick(){
+    await fetchShows();
+  }
+
   onBeforeMount(async () => {
     await fetchShows();
     await fetchTypes();
@@ -129,7 +142,7 @@
         </ul>
       </div>
 
-      <form @submit.prevent.stop="onShowAdd" v-if="is_superuser">
+      <form @submit.prevent.stop="onShowAdd" v-if="is_superuser" class="mb-2">
         <div class="row">
           <div class="col">
             <div class="form-floating">
@@ -178,6 +191,13 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
+      <div class="form-floating" v-if="is_auth">
+        <select class="form-select" v-model="typeIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="t.id" v-for="t in types">{{ t.show_type }}</option>
+        </select>
+        <label for="floatingInput">Тип</label>
+      </div>
 
       <div>
         <div v-for="item in shows" class="show-item">

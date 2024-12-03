@@ -85,6 +85,10 @@
     await fetchIncome();
   }
 
+  async function onExportClick() {
+    //await axios.get('/api/income/export/');
+  }
+
   onBeforeMount(async () => {
     await fetchIncome();
     await fetchShows();

@@ -5,6 +5,7 @@
   import Cookies from "js-cookie";
   import { storeToRefs } from "pinia";
   import useUserProfileStore from "@/stores/userProfileStore";
+  
 
   onBeforeMount(() => {
     axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
@@ -24,6 +25,8 @@
   const users = ref([]);
   const userIdFilter = ref(0);
   const expenseStats = ref({});
+  const artistIdFilter = ref(0);
+  const incomeIdFilter = ref(0);
 
   const loading = ref(false);
 
@@ -38,6 +41,12 @@
     const params = {};
     if (userIdFilter.value !== 0 && userIdFilter.value != "Все"){
       params.user = userIdFilter.value;
+    }
+    if (artistIdFilter.value !== 0 && artistIdFilter.value != "Все"){
+      params.artist = artistIdFilter.value;
+    }
+    if (incomeIdFilter.value !== 0 && incomeIdFilter.value != "Все"){
+      params.income = incomeIdFilter.value;
     }
     
     const r = await axios.get("/api/expense/",{
@@ -92,6 +101,19 @@
   async function fetchExpenseStats() {
     const r = await axios.get("/api/expense/stats");
     expenseStats.value = r.data;
+  }
+  async function onExportClick() {
+    const response = await axios.get('/api/expense/export-excel/', {
+        responseType: 'blob',
+    });
+
+    // Создаем ссылку для скачивания файла
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'data.xlsx'); // Имя файла для сохранения
+    document.body.appendChild(link);
+    link.click();
   }
 
   onBeforeMount(async () => {
@@ -151,6 +173,20 @@
       </form>
 
       <div v-if="loading">Загрузка...</div>
+      <div class="form-floating mb-2">
+        <select class="form-select" v-model="artistIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="a.id" v-for="a in artists" >{{ a.name }}</option>
+        </select>
+        <label for="floatingInput">Артист</label>
+      </div>
+      <div class="form-floating mb-2">
+        <select class="form-select" v-model="incomeIdFilter" @change="onSelectClick" required>
+          <option>Все</option>
+          <option :value="i.id" v-for="i in incomes" >{{ i.id }}</option>
+        </select>
+        <label for="floatingInput">Доход</label>
+      </div>
       <div class="form-floating" v-if="is_superuser">
         <select class="form-select" v-model="userIdFilter" @change="onSelectClick" required>
           <option>Все</option>
@@ -178,6 +214,9 @@
             <i class="bi bi-x"></i>
           </button>
         </div>
+      </div>
+      <div  v-if="is_auth">
+        <button class="btn btn-outline-secondary"  @click="onExportClick()">Экспорт</button>
       </div>
     </div>
 

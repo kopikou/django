@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView
 from artists.models import Artist
 
+
 # Create your views here.
 #def show_artists(request):
     #artists = Artist.objects.all()
@@ -21,3 +22,4 @@ class ShowArtistsView(TemplateView):
         context['artists'] = Artist.objects.all()
 
         return context
+    

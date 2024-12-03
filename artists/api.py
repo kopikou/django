@@ -13,7 +13,12 @@ from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from rest_framework import status
+import pandas as pd
+from django.http import HttpResponse;
 
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+import io
 
 
 class UsersViewset(mixins.RetrieveModelMixin, 
@@ -88,9 +93,12 @@ class ArtistsViewset(mixins.CreateModelMixin,
         qs = super().get_queryset()
 
         show = self.request.query_params.get('show')
+        name = self.request.query_params.get('name')
         #user = self.request.query_params.get('user')
         if show:
             qs = qs.filter(show=show)
+        if name:
+            qs = qs.filter(name=name)
         # if user:
         #     qs = qs.filter(user=user)
         # if not self.request.user.is_superuser:
@@ -116,6 +124,10 @@ class ShowViewset(mixins.CreateModelMixin,
     def get_queryset(self):
         qs = super().get_queryset()
 
+        type = self.request.query_params.get('type')
+
+        if type:
+            qs = qs.filter(type=type)
         if(not self.request.user.is_authenticated):
             #qs = qs.filter(user=self.request.user)
             qs = None
@@ -181,7 +193,8 @@ class IncomeViewset(mixins.CreateModelMixin,
         if(not self.request.user.is_authenticated):
             qs = None
         return qs
-
+    
+    
 class ExpenseViewset(mixins.CreateModelMixin,
     mixins.UpdateModelMixin, 
     mixins.RetrieveModelMixin,                
@@ -198,7 +211,13 @@ class ExpenseViewset(mixins.CreateModelMixin,
     def get_queryset(self):
         qs = super().get_queryset()
 
+        artist = self.request.query_params.get('artist')
         user = self.request.query_params.get('user')
+        income = self.request.query_params.get('income')
+        if artist:
+            qs = qs.filter(artist=artist)
+        if income:
+            qs = qs.filter(income=income)
         if user:
             qs = qs.filter(user=user)
         if not self.request.user.is_superuser and self.request.user.is_authenticated:
@@ -222,3 +241,33 @@ class ExpenseViewset(mixins.CreateModelMixin,
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
+    
+    class ExportExpensesSerializer(serializers.ModelSerializer):
+        artist_name = serializers.CharField(source='artist.name')  
+        income_id = serializers.IntegerField(source='income.id')
+        show = serializers.CharField(source='income.show')
+        date = serializers.DateField(source='income.date')
+        salary_pers = serializers.IntegerField(source='salary')
+        #user_email = serializers.EmailField(source='user.email')  
+
+        class Meta:
+            model = Expenses
+            fields = ['id', 'artist_name', 'income_id', 'show', 'date', 'salary_pers']
+
+    @action(detail=False, methods=['GET'], url_path='export-excel')
+    def export_excel(self, request):
+        queryset = self.get_queryset()
+
+        # Используем специальный сериализатор для экспорта
+        serializer = self.ExportExpensesSerializer(queryset, many=True)
+        data = serializer.data
+
+        # Преобразуем данные в DataFrame
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="Расходы.xlsx"'
+        df.to_excel(response, index=False)
+        return response
