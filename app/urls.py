@@ -23,6 +23,7 @@ from artists import views
 from rest_framework.routers import DefaultRouter
 from artists.api import ArtistsViewset,ShowViewset,TypeViewset,IncomeViewset,ExpenseViewset,UsersViewset,UserProfileViewSet
 
+
 router = DefaultRouter()
 router.register("artists", ArtistsViewset, basename="artists")
 router.register("show", ShowViewset, basename="show")

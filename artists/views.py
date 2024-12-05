@@ -3,16 +3,11 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView
 from artists.models import Artist
 
+from django.shortcuts import render
+from django.template import RequestContext
+ 
+ 
 
-# Create your views here.
-#def show_artists(request):
-    #artists = Artist.objects.all()
-
-    #result = ""
-    #for a in artists:
-        #result += a.name + "<br>"
-
-    #return HttpResponse(result)
 
 class ShowArtistsView(TemplateView):
     template_name = "artists/show_artists.html"

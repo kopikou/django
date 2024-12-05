@@ -30,6 +30,7 @@
   const artistsForFilter = ref([]);
   const users = ref([]);
   const userIdFilter = ref(0);
+  const selectedPicture = ref(null);
 
   const loading = ref(false);
 
@@ -209,7 +210,7 @@
           <div>"{{ showsById[item.show.id]?.name }}"</div>
           <div v-show="item.picture"><img 
             :src="item.picture" 
-            @click="onArtistPictureClick(item)"
+            @click="selectedPicture = item.picture"
             style="max-height: 60px;"
             data-bs-toggle="modal"
             data-bs-target="#imageArtistModal"
@@ -303,7 +304,7 @@
       </div>
     </div>
 
-    <div class="modal fade" id="imageArtistModal" tabindex="-1">
+    <!-- <div class="modal fade" id="imageArtistModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -331,7 +332,10 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
+  </div>
+  <div v-if="selectedPicture" class="overlay" @click="selectedPicture = null">
+    <img :src="selectedPicture" class="zoomed-image" alt="Изображение продукта" />
   </div>
 </template>
 
@@ -348,5 +352,22 @@
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.178);
     background-color:rgba(250, 161, 235, 0.358);
+  }
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .zoomed-image {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 10px;
   }
 </style>
