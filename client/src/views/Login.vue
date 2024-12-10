@@ -38,17 +38,22 @@
   <div class="container">
     <div class="p-2">
       <form @submit.prevent.stop="onLogin"  v-if="is_auth == false">
-          <div data-mdb-input-init class="form-outline mb-4">
+        <div class="row justify-content-md-center">
+          <div data-mdb-input-init class="col-3 form-outline mb-4">
             <input type="text" id="form2Example1" class="form-control" v-model="userToLogin.username" required/>
-            <label class="form-label" for="form2Example1">Username</label>
+            <label class="form-label" for="form2Example1">Имя</label>
           </div>
+        </div>
 
-          <div data-mdb-input-init class="form-outline mb-4">
+        <div class="row justify-content-md-center">
+          <div data-mdb-input-init class="col-3 form-outline mb-4">
             <input type="password" id="form2Example2" class="form-control" v-model="userToLogin.password" required/>
-            <label class="form-label" for="form2Example2">Password</label>
+            <label class="form-label" for="form2Example2">Пароль</label>
           </div>
-          
-          <button class="btn btn-primary btn-block mb-4">Войти</button>
+        </div>
+        <div class="row justify-content-md-center">
+          <button class="btn btn-primary btn-block mb-4 col-md-auto">Войти</button>
+        </div>
         
       </form>
     </div>
